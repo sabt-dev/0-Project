@@ -33,9 +33,7 @@ const UserProfileID = ({ params }: { params: any }) => {
                 const data = text ? JSON.parse(text) : {};
                 setData(data);
 
-                const dataID: number = parseInt(data.ID);
-
-                if (dataID !== parseInt(id)) {
+                if (parseInt(data.ID) !== parseInt(id)) {
                     setAuthorized(false);
                     setError('Unauthorized');
                 } else {
@@ -60,19 +58,19 @@ const UserProfileID = ({ params }: { params: any }) => {
     }, [params]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className='min-h-screen'>Loading...</div>;
     }
 
     if (error) {
-        return <div>Error: {error}</div>;
+        return <div className='min-h-screen'>Error: {error}</div>;
     }
 
     if (!authorized) {
-        return <div>You are not authorized to view this page</div>;
+        return <div className='min-h-screen'>You are not authorized to view this page</div>;
     }
 
     return (
-        <div className='container mx-auto'>
+        <div className='min-h-screen'>
             <h1>User Profile ID: {userID}</h1>
             <pre>{JSON.stringify(data, null, 2)}</pre>
         </div>
