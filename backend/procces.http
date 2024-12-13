@@ -1,0 +1,22 @@
+### POST request to example server
+POST http://localhost:5000/api/v1/signup
+Content-Type: application/json
+
+{
+  "first_name": "nyvo",
+  "last_name": "gg",
+  "email": "nyvo@gg.com",
+  "pwd": "password1"
+}
+
+### post request to example server
+POST http://localhost:5000/api/v1/login
+Content-Type: application/json
+
+{
+  "email": "nyvo@gg.com",
+  "pwd": "password1"
+}
+###
+
+GET http://localhost:5000/api/v1/user
