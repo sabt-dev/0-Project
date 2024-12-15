@@ -1,6 +1,6 @@
 # Define the backend and frontend start commands
-BACKEND_CMD = go run C:\Users\hussa\Documents\0-Project\backend\main.go
-FRONTEND_CMD = npm run dev --prefix frontend
+BACKEND_CMD = go run ..\backend\cmd\main.go
+FRONTEND_CMD = npm run dev --prefix ..\frontend
 
 # Target to start the backend server
 backend:
