@@ -25,10 +25,6 @@ const UserProfileID = ({ params }: { params: any }) => {
                     credentials: 'include',
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
                 const text = await response.text();
                 const data = text ? JSON.parse(text) : {};
                 setData(data);

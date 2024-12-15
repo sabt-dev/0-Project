@@ -18,7 +18,7 @@ func main() {
 	router := gin.Default()
 
 	// Apply the CORS configuration to the router
-	router.Use(middleware.CORSMiddleware())
+	router.Use(middleware.AllowCORS())
 
 	// Apply the routes to the router
 	routes.Routes(router)

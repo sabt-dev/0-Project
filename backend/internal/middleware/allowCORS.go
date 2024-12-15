@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func CORSMiddleware() gin.HandlerFunc {
+func AllowCORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // Change this to frontend URL
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
