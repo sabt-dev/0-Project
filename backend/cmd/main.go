@@ -1,11 +1,13 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sabt-dev/0-Project/internal/initializers"
 	"github.com/sabt-dev/0-Project/internal/middleware"
 	"github.com/sabt-dev/0-Project/internal/routes"
-	"log"
 )
 
 func init() {
@@ -16,6 +18,7 @@ func init() {
 
 func main() {
 	router := gin.Default()
+	var addr string = ":"+os.Getenv("PORT")
 
 	// Apply the CORS configuration to the router
 	router.Use(middleware.AllowCORS())
@@ -23,7 +26,7 @@ func main() {
 	// Apply the routes to the router
 	routes.Routes(router)
 
-	err := router.Run()
+	err := router.RunTLS(addr, "../tls/cert.pem", "../tls/key.pem")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
+import Footer from './_components/footer';
 
 
 export default function Home() {
@@ -14,7 +15,7 @@ export default function Home() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:5000/api/v1/login', {
+            const response = await fetch('https://localhost:5000/api/v1/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -28,7 +29,7 @@ export default function Home() {
 
             const text = await response.text();
             const data = text ? JSON.parse(text) : {};
-            console.log(data);
+            //console.log(data);
             setLoading(false);
             if (data.status === "success") {
                 router.push(`/profile/${data.user.ID}`);
@@ -86,6 +87,7 @@ export default function Home() {
                 </div>
             </div>
         </div>
+        <Footer/>
       </div>
   );
 }

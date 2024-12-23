@@ -1,7 +1,6 @@
 import "./globals.css";
 import React from "react";
 import NavHeader from "./_components/navHeader";
-import Footer from "./_components/footer";
 
 
 export default function RootLayout({
@@ -14,7 +13,6 @@ export default function RootLayout({
     <body>
         <NavHeader/>
         {children}
-        <Footer/>
     </body>
     </html>
   );

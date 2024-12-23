@@ -17,7 +17,7 @@ const UserProfileID = ({ params }: { params: any }) => {
                 const id = resolvedParams.id;
                 setUserID(parseInt(id));
 
-                const response = await fetch(`http://localhost:5000/api/v1/user`, {
+                const response = await fetch(`https://localhost:5000/api/v1/user`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
