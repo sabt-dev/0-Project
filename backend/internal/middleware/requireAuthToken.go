@@ -2,13 +2,15 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/sabt-dev/0-Project/internal/initializers"
-	"github.com/sabt-dev/0-Project/internal/models"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"github.com/sabt-dev/0-Project/internal/initializers"
+	"github.com/sabt-dev/0-Project/internal/models"
 )
 
 func RequireAuthToken(c *gin.Context) {
@@ -39,13 +41,20 @@ func RequireAuthToken(c *gin.Context) {
 			})
 		}
 		// find the user_id from the token in "sub"
-		var user models.User
-		initializers.DB.First(&user, claims["sub"])
-		if user.ID == 0 {
-			c.AbortWithStatus(http.StatusUnauthorized)
-		}
+		userID, err := uuid.Parse(claims["sub"].(string))
+        if err != nil {
+            c.AbortWithStatus(http.StatusUnauthorized)
+            return
+        }
+
+        var user models.User
+        result := initializers.DB.First(&user, "id = ?", userID)
+        if result.Error != nil {
+            c.AbortWithStatus(http.StatusUnauthorized)
+            return
+        }
 		// attach the user to the context
-		c.Set("user", user)
+		c.Set("userData", user)
 
 		// continue
 		c.Next()
