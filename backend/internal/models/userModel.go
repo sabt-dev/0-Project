@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type User struct {
@@ -17,12 +16,6 @@ type User struct {
 	Role             string    `gorm:"not null;type:varchar(255);default:'user'"`
 	CreatedAt        time.Time `gorm:"not null"`
 	UpdatedAt        time.Time `gorm:"not null"`
-}
-
-// BeforeCreate hook will be called before inserting a new record
-func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-    u.ID = uuid.New()
-    return
 }
 
 type SignUpInput struct {

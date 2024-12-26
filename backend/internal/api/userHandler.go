@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/sabt-dev/0-Project/internal/initializers"
 	"github.com/sabt-dev/0-Project/internal/models"
 	"golang.org/x/crypto/bcrypt"
@@ -59,6 +60,7 @@ func Register(c *gin.Context) {
 	// create a new user
 	now := time.Now()
 	user := models.User{
+		ID: uuid.New(),
 		Name: body.Name, 
 		Email: strings.ToLower(body.Email), 
 		Password: string(password), 

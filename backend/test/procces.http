@@ -20,3 +20,6 @@ Content-Type: application/json
 
 ### get request to example server
 GET https://localhost:5000/api/v1/users/me
+
+### GET request to example server
+GET https://localhost:5000/api/v1/auth/logout
