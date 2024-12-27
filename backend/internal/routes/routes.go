@@ -1,10 +1,12 @@
 package routes
 
 import (
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sabt-dev/0-Project/internal/api"
 	"github.com/sabt-dev/0-Project/internal/middleware"
-	"os"
+	"github.com/sabt-dev/0-Project/internal/utils"
 )
 
 func Routes(r *gin.Engine) {
@@ -12,7 +14,7 @@ func Routes(r *gin.Engine) {
 
 	r.POST("/api/"+version+"/auth/register", api.Register)
 	r.POST("/api/"+version+"/auth/login", api.Login)
-	r.GET("/api/"+version+"/auth/verifyemail/:code", api.VerifyEmail)
+	r.GET("/api/"+version+"/auth/verifyemail/:code", utils.VerifyEmail)
 	r.GET("/api/"+version+"/users/me", middleware.RequireAuthToken, api.GetUser)
 	r.GET("/api/"+version+"/auth/logout", middleware.RequireAuthToken, api.Logout)
 }

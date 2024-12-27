@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sabt-dev/0-Project/internal/initializers"
 	"github.com/sabt-dev/0-Project/internal/models"
+	"github.com/sabt-dev/0-Project/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -43,7 +44,7 @@ func Register(c *gin.Context) {
 	}
 
 	// check if the email is valid
-	_, err = VerifyEmailExistence(body.Email)
+	_, err = utils.VerifyEmailExistence(body.Email)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": err.Error(),

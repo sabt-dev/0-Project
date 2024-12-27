@@ -1,17 +1,15 @@
-package api
+package utils
 
 import (
 	"errors"
 	"fmt"
-	"math"
-	"math/rand/v2"
 	"net"
 	"net/smtp"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhpk/randstr"
 )
 
 func VerifyEmail(c *gin.Context) {
@@ -68,5 +66,5 @@ func VerifyEmailCode(inputCode, actualCode string) bool {
 
 //generateEmailVerificationCode generates a random 6-digit code
 func GenerateEmailVerificationCode() string {
-	return strconv.Itoa(int(math.Floor(100000 + rand.Float64()*(999999-100000))))
+	return Encode(randstr.String(20))
 }
