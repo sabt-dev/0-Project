@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
+	"os"
 	"regexp"
 	"strings"
 
@@ -19,15 +20,24 @@ func VerifyEmail(c *gin.Context) {
 	fmt.Println(code)
 }
 
-// VerifyEmailExistence checks if the email format is valid and if the domain has MX records
-func VerifyEmailExistence(email string) (bool, error) {
-    // Check email format
-    emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+func ValidateEmailFormat(email string) error {
+	// Check email format
+	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
     re := regexp.MustCompile(emailRegex)
     if !re.MatchString(email) {
-        return false, errors.New("invalid email format")
+        return errors.New("invalid email format")
     }
 
+	return nil
+}
+
+// VerifyEmailExistence checks if the email format is valid and if the domain has MX records
+func VerifyEmailExistence(email string) (bool, error) {
+	// Check email format
+	err := ValidateEmailFormat(email)
+	if err != nil {
+		return false, err
+	}
     // Check domain MX records
     domain := email[strings.LastIndex(email, "@")+1:]
     mxRecords, err := net.LookupMX(domain)
@@ -40,11 +50,11 @@ func VerifyEmailExistence(email string) (bool, error) {
 
 // SendVerificationCode sends the verification code to the user's email
 func SendVerificationCode(email, code string) error {
-	from := "your-email@example.com"
-	password := "your-email-password"
+	from := os.Getenv("FROM") //"your-email@example.com"
+	password := os.Getenv("EMAIL_PASSWORD") //"your-email-password"
 	to := email
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
+	smtpHost := os.Getenv("SMTP_HOST") //"smtp.gmail.com"
+	smtpPort := os.Getenv("SMTP_PORT") //"587"
 	
 	msg := "From: " + from + "\n" +
 	"To: " + to + "\n" +

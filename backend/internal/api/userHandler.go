@@ -2,12 +2,10 @@ package api
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/sabt-dev/0-Project/internal/initializers"
 	"github.com/sabt-dev/0-Project/internal/models"
@@ -19,7 +17,6 @@ import (
 func Register(c *gin.Context) {
 	// get the email/password off the request body
 	var body *models.SignUpInput
-
 	err := c.BindJSON(&body)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -43,7 +40,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// check if the email is valid
+	// check if the domain of email and the format are valid
 	_, err = utils.VerifyEmailExistence(body.Email)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -72,13 +69,14 @@ func Register(c *gin.Context) {
 	result := initializers.DB.Create(&user)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "user already exists",
+			"error": "user already exists or failed to create user",
 		})
 		return
 	}
 	// respond with the user
-	c.JSON(200, gin.H{
+	c.JSON(201, gin.H{
 		"status": "success",
+		"message": "verification code sent to your email " + user.Email,
 	})
 }
 
@@ -123,15 +121,10 @@ func Login(c *gin.Context) {
 	}
 
 	// generate a token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
-	})
-
-	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	tokenString, err := utils.GenerateToken(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate token",
+			"error": "Invalid email or password",
 		})
 		return
 	}
@@ -146,6 +139,7 @@ func Login(c *gin.Context) {
 
 // Logout is a handler for GET /logout
 func Logout(c *gin.Context) {
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", "", -1, "/", "", false, true)
 }
 
@@ -163,6 +157,6 @@ func GetUser(c *gin.Context) {
 	//TODO: complete the implementation with user model
 	c.JSON(200, gin.H{
 		"status": "success",
-		"user": userResponse,
+		"data": userResponse,
 	})
 }

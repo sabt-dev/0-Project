@@ -24,6 +24,9 @@ func main() {
 	// Apply the CORS configuration to the router
 	router.Use(middleware.AllowCORS())
 	
+	// Apply the rate limiter middleware to the router
+	router.Use(middleware.RateLimiter())
+	
 	// Apply the routes to the router
 	routes.Routes(router)
 	
