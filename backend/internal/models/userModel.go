@@ -12,6 +12,7 @@ type User struct {
 	Email     		 string    `gorm:"unique;not null"`
 	VerificationCode string
 	Verified         bool      `gorm:"not null"`
+	VerifiedAt       *time.Time
 	Password  		 string    `gorm:"not null" validate:"required,min=8"`
 	Role             string    `gorm:"not null;type:varchar(255);default:'user'"`
 	CreatedAt        time.Time `gorm:"not null"`

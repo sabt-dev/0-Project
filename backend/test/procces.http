@@ -3,8 +3,8 @@ POST https://localhost:5000/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "name": "yyrr",
-  "email": "hussain1g@dwd.com",
+  "name": "sonar",
+  "email": "hussain.sabt@gmail.com",
   "password": "password1",
   "passwordConfirm": "password1"
 }
@@ -14,7 +14,7 @@ POST https://localhost:5000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "hussain1g@dwd.com",
+  "email": "hussain.sabt@gmail.com",
   "password": "password1"
 }
 
@@ -23,3 +23,6 @@ GET https://localhost:5000/api/v1/users/me
 
 ### GET request to example server
 GET https://localhost:5000/api/v1/auth/logout
+
+### GET request to example server
+GET https://localhost:5000/api/v1/auth/verify-email?code=Kiibsu6RFugVslF7tmgt

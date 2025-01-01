@@ -54,7 +54,10 @@ func RateLimiter() gin.HandlerFunc {
         limiter := getClient(ip)
 
         if !limiter.Allow() {
-            c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
+            c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+                "status": "fail",
+                "error": "Too many requests",
+            })
             return
         }
 

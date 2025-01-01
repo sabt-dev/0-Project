@@ -20,6 +20,7 @@ func Register(c *gin.Context) {
 	err := c.BindJSON(&body)
 	if err != nil {
 		c.JSON(400, gin.H{
+			"status": "fail",
 			"error": "Invalid json request format",
 		})
 		return
@@ -28,6 +29,7 @@ func Register(c *gin.Context) {
 	// check if email and password are provided
 	if body.Email == "" || body.Password == "" || body.Name == "" || body.PasswordConfirm == "" {
 		c.JSON(400, gin.H{
+			"status": "fail",
 			"error": "Email and password are required",
 		})
 		return
@@ -35,6 +37,7 @@ func Register(c *gin.Context) {
 
 	if body.Password != body.PasswordConfirm {
 		c.JSON(400, gin.H{
+			"status": "fail",
 			"error": "password do not match",
 		})
 		return
@@ -44,6 +47,7 @@ func Register(c *gin.Context) {
 	_, err = utils.VerifyEmailExistence(body.Email)
 	if err != nil {
 		c.JSON(400, gin.H{
+			"status": "fail",
 			"error": err.Error(),
 		})
 		return
@@ -56,27 +60,54 @@ func Register(c *gin.Context) {
 	}
 
 	// create a new user
-	now := time.Now()
-	user := models.User{
+	var now time.Time = time.Now()
+	newUser := models.User{
 		ID: uuid.New(),
 		Name: body.Name, 
 		Email: strings.ToLower(body.Email), 
 		Password: string(password), 
+		Role: "user",
 		Verified: false,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	result := initializers.DB.Create(&user)
+	result := initializers.DB.Create(&newUser)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
 			"error": "user already exists or failed to create user",
 		})
 		return
 	}
+
+	// Generate Verification Code & Update User in Database
+	var verCode string = utils.GenerateEmailVerificationCode()
+	var encodedVerCode string = utils.Encode(verCode)
+
+	newUser.VerificationCode = encodedVerCode
+	initializers.DB.Save(newUser)
+
+	var firstName string = newUser.Name
+	if strings.Contains(firstName, " ") {
+		firstName = strings.Split(firstName, " ")[1]
+	}
+
+	// Send Verification Code to User's Email
+	err = utils.SendVerificationCode(newUser.Email, verCode, firstName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Failed to send verification code",
+		})
+		return
+	}
+
 	// respond with the user
 	c.JSON(201, gin.H{
 		"status": "success",
-		"message": "verification code sent to your email " + user.Email,
+		"message": "verification code sent to your email " + newUser.Email,
+		"uid": newUser.ID,
+		"email": newUser.Email,
 	})
 }
 
@@ -88,6 +119,7 @@ func Login(c *gin.Context) {
 	err := c.BindJSON(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
 			"error": "Invalid json request format",
 		})
 		return
@@ -96,6 +128,7 @@ func Login(c *gin.Context) {
 	// Check if email and password are provided
 	if body.Email == "" || body.Password == "" {
 		c.JSON(400, gin.H{
+			"status": "fail",
 			"error": "Email and password are required",
 		})
 		return
@@ -106,6 +139,16 @@ func Login(c *gin.Context) {
 	initializers.DB.First(&user, "email = ?", strings.ToLower(body.Email))
 	if user.ID == [16]byte{} {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error": "Invalid email or password",
+		})
+		return
+	}
+
+	// check if the user is verified
+	if !user.Verified {
+		c.JSON(http.StatusConflict, gin.H{
+			"status": "fail",
 			"error": "Invalid email or password",
 		})
 		return
@@ -115,6 +158,7 @@ func Login(c *gin.Context) {
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
 			"error": "Invalid email or password",
 		})
 		return
@@ -124,7 +168,8 @@ func Login(c *gin.Context) {
 	tokenString, err := utils.GenerateToken(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Invalid email or password",
+			"status": "fail",
+			"error": "Something went wrong",
 		})
 		return
 	}
@@ -134,6 +179,40 @@ func Login(c *gin.Context) {
 	c.SetCookie("Authorization", tokenString, 60*60*24*30, "/", "", false, true)
 	c.JSON(200, gin.H{
 		"status": "success",
+		"message": "Logged in successfully",
+	})
+}
+
+// VerifyEmail is a handler for GET /verifyemail?code=[verification_code]
+func VerifyUserEmail(c *gin.Context) {
+	var code string = c.Query("code")
+	var verification_code string = utils.Encode(code)
+	var updatedUser models.User
+	result := initializers.DB.First(&updatedUser, "verification_code = ?", verification_code)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail", 
+			"message": "Invalid verification code or user doesn't exists",
+		})
+		return
+	}
+
+	if updatedUser.Verified {
+		c.JSON(http.StatusConflict, gin.H{
+			"status": "fail", 
+			"message": "User already verified",
+		})
+		return
+	}
+
+	var now time.Time = time.Now()
+	updatedUser.VerificationCode = ""
+	updatedUser.Verified = true
+	updatedUser.VerifiedAt = &now
+	initializers.DB.Save(&updatedUser)
+	c.JSON(200, gin.H{
+		"status": "success",
+		"message": "User verified successfully, now you can login",
 	})
 }
 

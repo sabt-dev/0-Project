@@ -37,6 +37,7 @@ func RequireAuthToken(c *gin.Context) {
 		// check if the token is expired
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
 			c.JSON(http.StatusUnauthorized, gin.H{
+				"status": "fail",
 				"error": "Token is expired",
 			})
 		}

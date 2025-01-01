@@ -15,7 +15,7 @@ export default function Home() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('https://localhost:5000/api/v1/login', {
+            const response = await fetch('https://localhost:5000/api/v1/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export default function Home() {
             //console.log(data);
             setLoading(false);
             if (data.status === "success") {
-                router.push(`/profile/${data.user.ID}`);
+                router.push(`/profile/${data.uid}`);
             }
         } catch (error) {
             console.warn('An unexpected error happened:', error);

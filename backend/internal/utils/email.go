@@ -1,24 +1,17 @@
 package utils
 
 import (
+	"crypto/tls"
 	"errors"
-	"fmt"
 	"net"
-	"net/smtp"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/thanhpk/randstr"
+	"gopkg.in/gomail.v2"
 )
-
-func VerifyEmail(c *gin.Context) {
-    code := c.Param("code")
-    // Use the 'code' variable as needed
-    // ...existing code...
-	fmt.Println(code)
-}
 
 func ValidateEmailFormat(email string) error {
 	// Check email format
@@ -49,32 +42,37 @@ func VerifyEmailExistence(email string) (bool, error) {
 }
 
 // SendVerificationCode sends the verification code to the user's email
-func SendVerificationCode(email, code string) error {
+func SendVerificationCode(email, code, firstName string) error {
+	//TODO: Implement the email sending logic to .env variables
 	from := os.Getenv("FROM") //"your-email@example.com"
-	password := os.Getenv("EMAIL_PASSWORD") //"your-email-password"
+	smtpPass := os.Getenv("SMTP_PASS") //"your-email-password"
+	smtpUser := os.Getenv("SMTP_USER") //"your-email-username"
 	to := email
 	smtpHost := os.Getenv("SMTP_HOST") //"smtp.gmail.com"
-	smtpPort := os.Getenv("SMTP_PORT") //"587"
-	
-	msg := "From: " + from + "\n" +
-	"To: " + to + "\n" +
-	"Subject: Email Verification Code\n\n" +
-	"Your verification code is: " + code
-	
-	auth := smtp.PlainAuth("", from, password, smtpHost)
-	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{to}, []byte(msg))
+	smtpPortStr := os.Getenv("SMTP_PORT") //"587"
+	smtpPort, err := strconv.Atoi(smtpPortStr)
 	if err != nil {
+		return err
+	}
+
+	m := gomail.NewMessage()
+
+	m.SetHeader("From", from)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", "Email Verification Code to " + firstName)
+	m.SetBody("text/plain", "Your verification code is: " + code)
+
+	d := gomail.NewDialer(smtpHost, smtpPort, smtpUser, smtpPass)
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	
+	// Send Email
+	if err := d.DialAndSend(m); err != nil {
 		return err
 	}
 	return nil
 }
 
-// VerifyEmailCode checks if the provided code matches the generated code
-func VerifyEmailCode(inputCode, actualCode string) bool {
-	return inputCode == actualCode
-}
-
 //generateEmailVerificationCode generates a random 6-digit code
 func GenerateEmailVerificationCode() string {
-	return Encode(randstr.String(20))
+	return string(randstr.String(20))
 }
