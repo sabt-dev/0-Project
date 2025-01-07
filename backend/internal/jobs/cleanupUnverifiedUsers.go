@@ -2,10 +2,10 @@ package jobs
 
 import (
     "time"
+    "log"
 
     "github.com/sabt-dev/0-Project/internal/initializers"
     "github.com/sabt-dev/0-Project/internal/models"
-    "log"
 )
 
 func CleanupUnverifiedUsers() {
@@ -15,7 +15,7 @@ func CleanupUnverifiedUsers() {
         // Calculate the cutoff time
         cutoffTime := time.Now().Add(-10 * time.Minute)
 
-        // Delete unverified users who were created more than 5 minutes ago
+        // Delete unverified users who were created more than 10 minutes ago
         result := initializers.DB.Where("verified = ? AND created_at < ?", false, cutoffTime).Delete(&models.User{})
         if result.Error != nil || result.RowsAffected != 0 {
             log.Printf("Failed to delete unverified users: %v", result.Error)

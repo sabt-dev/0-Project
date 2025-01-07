@@ -10,8 +10,6 @@ import (
 	"os"
 )
 
-var addr string
-
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
@@ -35,7 +33,7 @@ func main() {
 	routes.Routes(router)
 	
 	// Run the server with TLS
-	addr = ":" + os.Getenv("PORT")
+	addr := ":" + os.Getenv("PORT")
 	err := router.RunTLS(addr, "../tls/cert.pem", "../tls/key.pem")
 	if err != nil {
 		log.Fatal(err)

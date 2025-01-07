@@ -10,7 +10,6 @@ import (
 	"github.com/sabt-dev/0-Project/internal/initializers"
 	"github.com/sabt-dev/0-Project/internal/models"
 	"github.com/sabt-dev/0-Project/internal/utils"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // SignUp is a handler for POST /signup
@@ -21,7 +20,7 @@ func Register(c *gin.Context) {
 	if err != nil {
 		c.JSON(400, gin.H{
 			"status": "fail",
-			"error": "Invalid json request format",
+			"error":  "Invalid json request format",
 		})
 		return
 	}
@@ -30,7 +29,7 @@ func Register(c *gin.Context) {
 	if body.Email == "" || body.Password == "" || body.Name == "" || body.PasswordConfirm == "" {
 		c.JSON(400, gin.H{
 			"status": "fail",
-			"error": "Email and password are required",
+			"error":  "Email and password are required",
 		})
 		return
 	}
@@ -38,7 +37,7 @@ func Register(c *gin.Context) {
 	if body.Password != body.PasswordConfirm {
 		c.JSON(400, gin.H{
 			"status": "fail",
-			"error": "password do not match",
+			"error":  "password do not match",
 		})
 		return
 	}
@@ -48,13 +47,13 @@ func Register(c *gin.Context) {
 	if err != nil {
 		c.JSON(400, gin.H{
 			"status": "fail",
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
 
 	// hash the password
-	password, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	password, err := utils.HashPassword(body.Password)
 	if err != nil {
 		return
 	}
@@ -62,12 +61,12 @@ func Register(c *gin.Context) {
 	// create a new user
 	var now time.Time = time.Now()
 	newUser := models.User{
-		ID: uuid.New(),
-		Name: body.Name, 
-		Email: strings.ToLower(body.Email), 
-		Password: string(password), 
-		Role: "user",
-		Verified: false,
+		ID:        uuid.New(),
+		Name:      body.Name,
+		Email:     strings.ToLower(body.Email),
+		Password:  password,
+		Role:      "user",
+		Verified:  false,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -75,7 +74,7 @@ func Register(c *gin.Context) {
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
-			"error": "user already exists or failed to create user",
+			"error":  "user already exists or failed to create user",
 		})
 		return
 	}
@@ -97,17 +96,17 @@ func Register(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "fail",
-			"error": "Failed to send verification code",
+			"error":  "Failed to send verification code",
 		})
 		return
 	}
 
 	// respond with the user
 	c.JSON(201, gin.H{
-		"status": "success",
+		"status":  "success",
 		"message": "verification code sent to your email " + newUser.Email,
-		"uid": newUser.ID,
-		"email": newUser.Email,
+		"uid":     newUser.ID,
+		"email":   newUser.Email,
 	})
 }
 
@@ -120,7 +119,7 @@ func Login(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
-			"error": "Invalid json request format",
+			"error":  "Invalid json request format",
 		})
 		return
 	}
@@ -129,7 +128,7 @@ func Login(c *gin.Context) {
 	if body.Email == "" || body.Password == "" {
 		c.JSON(400, gin.H{
 			"status": "fail",
-			"error": "Email and password are required",
+			"error":  "Email and password are required",
 		})
 		return
 	}
@@ -140,7 +139,7 @@ func Login(c *gin.Context) {
 	if user.ID == [16]byte{} {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
-			"error": "Invalid email or password",
+			"error":  "Invalid email or password",
 		})
 		return
 	}
@@ -149,27 +148,27 @@ func Login(c *gin.Context) {
 	if !user.Verified {
 		c.JSON(http.StatusConflict, gin.H{
 			"status": "fail",
-			"error": "Invalid email or password",
+			"error":  "Invalid email or password",
 		})
 		return
 	}
 
 	// compare the password
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+	err = utils.CheckPasswordHash(body.Password, user.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
-			"error": "Invalid email or password",
+			"error":  "Invalid email or password",
 		})
 		return
 	}
 
 	// generate a token
-	tokenString, err := utils.GenerateToken(&user)
+	tokenString, err := utils.GenerateToken(&user, c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "fail",
-			"error": "Something went wrong",
+			"error":  "Something went wrong",
 		})
 		return
 	}
@@ -178,7 +177,7 @@ func Login(c *gin.Context) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", tokenString, 60*60*24*30, "/", "", false, true)
 	c.JSON(200, gin.H{
-		"status": "success",
+		"status":  "success",
 		"message": "Logged in successfully",
 	})
 }
@@ -191,7 +190,7 @@ func VerifyUserEmail(c *gin.Context) {
 	result := initializers.DB.First(&updatedUser, "verification_code = ?", verification_code)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"status": "fail", 
+			"status":  "fail",
 			"message": "Invalid verification code or user doesn't exists",
 		})
 		return
@@ -199,7 +198,7 @@ func VerifyUserEmail(c *gin.Context) {
 
 	if updatedUser.Verified {
 		c.JSON(http.StatusConflict, gin.H{
-			"status": "fail", 
+			"status":  "fail",
 			"message": "User already verified",
 		})
 		return
@@ -211,8 +210,99 @@ func VerifyUserEmail(c *gin.Context) {
 	updatedUser.VerifiedAt = &now
 	initializers.DB.Save(&updatedUser)
 	c.JSON(200, gin.H{
-		"status": "success",
+		"status":  "success",
 		"message": "User verified successfully, now you can login",
+	})
+}
+
+// RequestPasswordReset is a handler for POST /request-password-reset
+func RequestPasswordReset(c *gin.Context) {
+	var request struct {
+		Email string `json:"email" binding:"required,email"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "Invalid json request format",
+		})
+		return
+	}
+
+	var user models.User
+	result := initializers.DB.First(&user, "email = ?", request.Email)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "User not found",
+		})
+		return
+	}
+
+	// Generate a password reset token
+	expirationTime := time.Now().Add(1 * time.Hour)
+	resetToken := uuid.New().String()
+	user.PasswordResetToken = resetToken
+	user.PasswordResetExpires = &expirationTime // Token expires in 1 hour
+	initializers.DB.Save(&user)
+
+	// Send the reset token to the user's email
+	err := utils.SendPasswordResetEmail(user.Email, resetToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Failed to send password reset email",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Password reset code sent to your email",
+	})
+}
+
+// ResetPassword is a handler for POST /reset-password
+func ResetPassword(c *gin.Context) {
+	var request struct {
+		Token       string `json:"token" binding:"required"`
+		NewPassword string `json:"newPassword" binding:"required,min=8"`
+	}
+
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "Invalid json request format",
+		})
+		return
+	}
+
+	var user models.User
+	result := initializers.DB.First(&user, "password_reset_token = ?", request.Token)
+	if result.Error != nil || user.PasswordResetExpires.Before(time.Now()) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "Invalid or expired token",
+		})
+		return
+	}
+
+	// Update the user's password
+	hashedPassword, err := utils.HashPassword(request.NewPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Failed to hash password",
+		})
+		return
+	}
+	user.Password = hashedPassword
+	user.PasswordResetToken = ""
+	user.PasswordResetExpires = nil
+	initializers.DB.Save(&user)
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Password reset successfully",
 	})
 }
 
@@ -229,13 +319,13 @@ func GetUser(c *gin.Context) {
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		Role:  	   user.Role,
+		Role:      user.Role,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
 	//TODO: complete the implementation with user model
 	c.JSON(200, gin.H{
 		"status": "success",
-		"data": userResponse,
+		"data":   userResponse,
 	})
 }

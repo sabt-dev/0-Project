@@ -41,6 +41,7 @@ func RequireAuthToken(c *gin.Context) {
 				"error": "Token is expired",
 			})
 		}
+
 		// find the user_id from the token in "sub"
 		userID, err := uuid.Parse(claims["sub"].(string))
         if err != nil {
@@ -54,6 +55,13 @@ func RequireAuthToken(c *gin.Context) {
             c.AbortWithStatus(http.StatusUnauthorized)
             return
         }
+
+		// check if the user has the same IP-address
+		if claims["adr"] != c.ClientIP() {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
 		// attach the user to the context
 		c.Set("userData", user)
 

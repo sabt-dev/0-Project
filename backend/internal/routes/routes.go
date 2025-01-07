@@ -13,6 +13,8 @@ func Routes(router *gin.Engine) {
 
 	r.POST("/auth/register", api.Register)
 	r.POST("/auth/login", api.Login)
+	r.POST("/auth/request-password-reset", api.RequestPasswordReset)
+    r.POST("/auth/reset-password", api.ResetPassword)
 	r.GET("/auth/verify-email", api.VerifyUserEmail)
 	r.GET("/users/me", middleware.RequireAuthToken, api.GetUser)
 	r.GET("/auth/logout", middleware.RequireAuthToken, api.Logout)
