@@ -1,19 +1,20 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
+	"github.com/sabt-dev/0-Project/internal/config"
 	"github.com/sabt-dev/0-Project/internal/initializers"
+	"github.com/sabt-dev/0-Project/internal/jobs"
 	"github.com/sabt-dev/0-Project/internal/middleware"
 	"github.com/sabt-dev/0-Project/internal/routes"
-	"github.com/sabt-dev/0-Project/internal/jobs"
-	"log"
-	"os"
 )
 
 func init() {
-	initializers.LoadEnvVariables()
+	config.LoadConfig()
 	initializers.ConnectToDB()
-	initializers.SyncDatabase() // Uncomment this line to create the table
+	initializers.SyncDatabase()
 	initializers.CheckTLSFilesExistence()
 }
 
@@ -33,7 +34,7 @@ func main() {
 	routes.Routes(router)
 	
 	// Run the server with TLS
-	addr := ":" + os.Getenv("PORT")
+	addr := ":" + config.AppConfig.Port
 	err := router.RunTLS(addr, "../tls/cert.pem", "../tls/key.pem")
 	if err != nil {
 		log.Fatal(err)

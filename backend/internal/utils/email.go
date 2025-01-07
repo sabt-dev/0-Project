@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/sabt-dev/0-Project/internal/config"
 	"github.com/thanhpk/randstr"
 	"gopkg.in/gomail.v2"
 )
@@ -45,12 +45,12 @@ func VerifyEmailExistence(email string) (bool, error) {
 // SendVerificationCode sends the verification code to the user's email
 func SendVerificationCode(email, code, firstName string) error {
 	//TODO: Implement the email sending logic to .env variables
-	from := os.Getenv("FROM")          //"your-email@example.com"
-	smtpPass := os.Getenv("SMTP_PASS") //"your-email-password"
-	smtpUser := os.Getenv("SMTP_USER") //"your-email-username"
+	from := config.AppConfig.FromEmail          //"your-email@example.com"
+	smtpPass := config.AppConfig.SMTPPass  //"your-email-password"
+	smtpUser := config.AppConfig.SMTPUser  //"your-email-username"
 	to := email
-	smtpHost := os.Getenv("SMTP_HOST")    //"smtp.gmail.com"
-	smtpPortStr := os.Getenv("SMTP_PORT") //"587"
+	smtpHost := config.AppConfig.SMTPHost     //"smtp.gmail.com"
+	smtpPortStr := config.AppConfig.SMTPPort  //"587"
 	smtpPort, err := strconv.Atoi(smtpPortStr)
 	if err != nil {
 		return err
@@ -75,12 +75,12 @@ func SendVerificationCode(email, code, firstName string) error {
 
 func SendPasswordResetEmail(email, token string) error {
   //TODO: Implement the email sending logic to .env variables
-	from := os.Getenv("FROM")          //"your-email@example.com"
-	smtpPass := os.Getenv("SMTP_PASS") //"your-email-password"
-	smtpUser := os.Getenv("SMTP_USER") //"your-email-username"
+	from := config.AppConfig.FromEmail          //"your-email@example.com"
+	smtpPass := config.AppConfig.SMTPPass //"your-email-password"
+	smtpUser := config.AppConfig.SMTPUser //"your-email-username"
 	to := email
-	smtpHost := os.Getenv("SMTP_HOST")    //"smtp.gmail.com"
-	smtpPortStr := os.Getenv("SMTP_PORT") //"587"
+	smtpHost := config.AppConfig.SMTPHost    //"smtp.gmail.com"
+	smtpPortStr := config.AppConfig.SMTPPort //"587"
 	smtpPort, err := strconv.Atoi(smtpPortStr)
 	if err != nil {
 		return err

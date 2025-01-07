@@ -3,12 +3,12 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/sabt-dev/0-Project/internal/config"
 	"github.com/sabt-dev/0-Project/internal/initializers"
 	"github.com/sabt-dev/0-Project/internal/models"
 )
@@ -26,7 +26,7 @@ func RequireAuthToken(c *gin.Context) {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return []byte(os.Getenv("SECRET")), nil
+		return []byte(config.AppConfig.JWTSecret), nil
 	})
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)

@@ -4,18 +4,18 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sabt-dev/0-Project/internal/api"
+	"github.com/sabt-dev/0-Project/internal/handlers"
 	"github.com/sabt-dev/0-Project/internal/middleware"
 )
 
 func Routes(router *gin.Engine) {
 	r := router.Group("/api/" + os.Getenv("API_VERSION"))
 
-	r.POST("/auth/register", api.Register)
-	r.POST("/auth/login", api.Login)
-	r.POST("/auth/request-password-reset", api.RequestPasswordReset)
-    r.POST("/auth/reset-password", api.ResetPassword)
-	r.GET("/auth/verify-email", api.VerifyUserEmail)
-	r.GET("/users/me", middleware.RequireAuthToken, api.GetUser)
-	r.GET("/auth/logout", middleware.RequireAuthToken, api.Logout)
+	r.POST("/auth/register", handlers.Register)
+	r.POST("/auth/login", handlers.Login)
+	r.POST("/auth/request-password-reset", handlers.RequestPasswordReset)
+    r.POST("/auth/reset-password", handlers.ResetPassword)
+	r.GET("/auth/verify-email", handlers.VerifyUserEmail)
+	r.GET("/users/me", middleware.RequireAuthToken, handlers.GetUser)
+	r.GET("/auth/logout", middleware.RequireAuthToken, handlers.Logout)
 }
