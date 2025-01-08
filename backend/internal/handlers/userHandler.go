@@ -332,7 +332,7 @@ func RequestPasswordReset(c *gin.Context) {
 	// Generate a password reset token
 	expirationTime := time.Now().Add(1 * time.Hour)
 	resetToken := uuid.New().String()
-	user.PasswordResetToken = resetToken
+	user.PasswordResetToken = &resetToken
 	user.PasswordResetExpires = &expirationTime // Token expires in 1 hour
 	if tx.Save(&user).Error != nil {
 		tx.Rollback()
@@ -343,8 +343,8 @@ func RequestPasswordReset(c *gin.Context) {
 		return
 	}
 
-	// Send the reset token to the user's email
-	err := utils.SendPasswordResetEmail(user.Email, resetToken)
+	// Encode the reset token and Send the reset token to the user's email
+	err := utils.SendPasswordResetEmail(user.Email, utils.URLencode(resetToken))
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -391,13 +391,24 @@ func ResetPassword(c *gin.Context) {
     if tx.Error != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "fail",
-			"error": "Failed to start transaction",
+			"error": "Something went wrong",
 		})
         return
     }
 
+	// Decode the reset token
+	tokenString, err := utils.URLdecode(request.Token)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "Invalid or time expired",
+		})
+		return
+	}
+
 	var user models.User
-	result := tx.First(&user, "password_reset_token = ?", request.Token)
+	result := tx.First(&user, "password_reset_token = ?", tokenString)
 	if result.Error != nil || user.PasswordResetExpires.Before(time.Now()) {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -430,7 +441,7 @@ func ResetPassword(c *gin.Context) {
 
 	// Update the user's password
 	user.Password = hashedPassword
-	user.PasswordResetToken = ""
+	user.PasswordResetToken = nil
 	user.PasswordResetExpires = nil
 	if result := tx.Save(&user); result.Error != nil {
         tx.Rollback()

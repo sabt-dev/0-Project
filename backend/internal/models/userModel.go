@@ -15,7 +15,7 @@ type User struct {
 	VerifiedAt           *time.Time
 	Password             string    `gorm:"not null" validate:"required,min=8"`
 	Role                 string    `gorm:"not null;type:varchar(255);default:'user'"`
-	PasswordResetToken   string    `gorm:"type:varchar(255)"`
+	PasswordResetToken   *string    `gorm:"type:varchar(255)"`
 	PasswordResetExpires *time.Time
 	CreatedAt            time.Time `gorm:"not null"`
 	UpdatedAt            time.Time `gorm:"not null"`
