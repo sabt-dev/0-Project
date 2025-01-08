@@ -14,6 +14,7 @@ type Config struct {
     DBPassword string
     DBName     string
     DBPort     string
+    DBURL      string
     JWTSecret  string
     SMTPHost   string
     SMTPPort   string
@@ -37,6 +38,7 @@ func LoadConfig() {
         DBPassword: os.Getenv("DB_PASS"),
         DBName:     os.Getenv("DB_NAME"),
         DBPort:     os.Getenv("DB_PORT"),
+        DBURL:      os.Getenv("DB_URL"),
         JWTSecret:  os.Getenv("JWT_SECRET"),
         SMTPHost:   os.Getenv("SMTP_HOST"),
         SMTPPort:   os.Getenv("SMTP_PORT"),

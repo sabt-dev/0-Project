@@ -9,6 +9,7 @@ const ResetPasswordForm = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const searchParams = useSearchParams();
+    
     const token = searchParams.get('token');
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -21,7 +22,7 @@ const ResetPasswordForm = () => {
 
         try {
             const response = await fetch('https://localhost:5000/api/v1/auth/reset-password', {
-                method: 'POST',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },

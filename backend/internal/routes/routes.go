@@ -14,7 +14,7 @@ func Routes(router *gin.Engine) {
 	r.POST("/auth/register", handlers.Register)
 	r.POST("/auth/login", handlers.Login)
 	r.POST("/auth/request-password-reset", handlers.RequestPasswordReset)
-    r.POST("/auth/reset-password", handlers.ResetPassword)
+    r.PUT("/auth/reset-password", handlers.ResetPassword)
 	r.GET("/auth/verify-email", handlers.VerifyUserEmail)
 	r.GET("/users/me", middleware.RequireAuthToken, handlers.GetUser)
 	r.GET("/auth/logout", middleware.RequireAuthToken, handlers.Logout)

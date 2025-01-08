@@ -47,7 +47,7 @@ func Register(c *gin.Context) {
 	if err != nil {
 		c.JSON(400, gin.H{
 			"status": "fail",
-			"error":  err.Error(),
+			"error":  "invalid email or email does not exist",
 		})
 		return
 	}
@@ -55,6 +55,16 @@ func Register(c *gin.Context) {
 	// hash the password
 	password, err := utils.HashPassword(body.Password)
 	if err != nil {
+		return
+	}
+
+	// Start a new transaction
+	tx := initializers.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Something went wrong",
+		})
 		return
 	}
 
@@ -70,8 +80,10 @@ func Register(c *gin.Context) {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	result := initializers.DB.Create(&newUser)
+
+	result := tx.Create(&newUser)
 	if result.Error != nil {
+		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
 			"error":  "user already exists or failed to create user",
@@ -84,7 +96,14 @@ func Register(c *gin.Context) {
 	var encodedVerCode string = utils.Encode(verCode)
 
 	newUser.VerificationCode = encodedVerCode
-	initializers.DB.Save(newUser)
+	if result := tx.Save(newUser); result.Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Something went wrong",
+		})
+		return
+	}
 
 	var firstName string = newUser.Name
 	if strings.Contains(firstName, " ") {
@@ -94,9 +113,20 @@ func Register(c *gin.Context) {
 	// Send Verification Code to User's Email
 	err = utils.SendVerificationCode(newUser.Email, verCode, firstName)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "fail",
 			"error":  "Failed to send verification code",
+		})
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Something went wrong",
 		})
 		return
 	}
@@ -129,6 +159,16 @@ func Login(c *gin.Context) {
 		c.JSON(400, gin.H{
 			"status": "fail",
 			"error":  "Email and password are required",
+		})
+		return
+	}
+
+	// check if the domain of email and the format are valid
+	_, err = utils.VerifyEmailExistence(body.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "Invalid email or email does not exist",
 		})
 		return
 	}
@@ -186,9 +226,21 @@ func Login(c *gin.Context) {
 func VerifyUserEmail(c *gin.Context) {
 	var code string = c.Query("code")
 	var verification_code string = utils.Encode(code)
+
+	// Start a new transaction
+    tx := initializers.DB.Begin()
+    if tx.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "something went wrong",
+		})
+        return
+    }
+
 	var updatedUser models.User
-	result := initializers.DB.First(&updatedUser, "verification_code = ?", verification_code)
+	result := tx.First(&updatedUser, "verification_code = ?", verification_code)
 	if result.Error != nil {
+		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "fail",
 			"message": "Invalid verification code or user doesn't exists",
@@ -208,7 +260,25 @@ func VerifyUserEmail(c *gin.Context) {
 	updatedUser.VerificationCode = ""
 	updatedUser.Verified = true
 	updatedUser.VerifiedAt = &now
-	initializers.DB.Save(&updatedUser)
+	if tx.Save(&updatedUser).Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Somthing went wrong",
+		})
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Something went wrong",
+		})
+		return
+	}
+
 	c.JSON(200, gin.H{
 		"status":  "success",
 		"message": "User verified successfully, now you can login",
@@ -228,9 +298,30 @@ func RequestPasswordReset(c *gin.Context) {
 		return
 	}
 
+	// Check if the email is valid
+	isValid, _ := utils.VerifyEmailExistence(request.Email)
+	if !isValid {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "Invalid email",
+		})
+		return
+	}
+
+	// Start a new transaction
+    tx := initializers.DB.Begin()
+    if tx.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Something went wrong",
+		})
+        return
+    }
+
+	// Check if the user exists
 	var user models.User
-	result := initializers.DB.First(&user, "email = ?", request.Email)
-	if result.Error != nil {
+	if tx.First(&user, "email = ?", request.Email).Error != nil {
+		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
 			"error":  "User not found",
@@ -243,14 +334,32 @@ func RequestPasswordReset(c *gin.Context) {
 	resetToken := uuid.New().String()
 	user.PasswordResetToken = resetToken
 	user.PasswordResetExpires = &expirationTime // Token expires in 1 hour
-	initializers.DB.Save(&user)
+	if tx.Save(&user).Error != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Something went wrong",
+		})
+		return
+	}
 
 	// Send the reset token to the user's email
 	err := utils.SendPasswordResetEmail(user.Email, resetToken)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "fail",
 			"error":  "Failed to send password reset email",
+		})
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Something went wrong",
 		})
 		return
 	}
@@ -261,7 +370,7 @@ func RequestPasswordReset(c *gin.Context) {
 	})
 }
 
-// ResetPassword is a handler for POST /reset-password
+// ResetPassword is a handler for PUT /reset-password
 func ResetPassword(c *gin.Context) {
 	var request struct {
 		Token       string `json:"token" binding:"required"`
@@ -276,12 +385,34 @@ func ResetPassword(c *gin.Context) {
 		return
 	}
 
+
+	// Start a new transaction
+    tx := initializers.DB.Begin()
+    if tx.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Failed to start transaction",
+		})
+        return
+    }
+
 	var user models.User
-	result := initializers.DB.First(&user, "password_reset_token = ?", request.Token)
+	result := tx.First(&user, "password_reset_token = ?", request.Token)
 	if result.Error != nil || user.PasswordResetExpires.Before(time.Now()) {
+		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
-			"error":  "Invalid or expired token",
+			"error":  "Invalid or time expired",
+		})
+		return
+	}
+
+	// Check if the new password is the same as the old password
+	if err := utils.CheckPasswordHash(request.NewPassword, user.Password); err == nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "New password cannot be the same as the old password",
 		})
 		return
 	}
@@ -289,16 +420,33 @@ func ResetPassword(c *gin.Context) {
 	// Update the user's password
 	hashedPassword, err := utils.HashPassword(request.NewPassword)
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "fail",
-			"error":  "Failed to hash password",
+			"error":  "Something went wrong",
 		})
 		return
 	}
+
+	// Update the user's password
 	user.Password = hashedPassword
 	user.PasswordResetToken = ""
 	user.PasswordResetExpires = nil
-	initializers.DB.Save(&user)
+	if result := tx.Save(&user); result.Error != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error": "Failed to update password",
+		})
+        return
+    }
+
+	// Commit the transaction
+    if err := tx.Commit().Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+        return
+    }
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
