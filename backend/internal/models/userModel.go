@@ -10,7 +10,7 @@ type User struct {
 	ID                   uuid.UUID `gorm:"type:VARCHAR(36);primary_key"`
 	Name                 string    `gorm:"type:varchar(255);not null"`
 	Email                string    `gorm:"unique;not null"`
-	VerificationCode     string
+	VerificationCode     *string
 	Verified             bool 	   `gorm:"not null"`
 	VerifiedAt           *time.Time
 	Password             string    `gorm:"not null" validate:"required,min=8"`

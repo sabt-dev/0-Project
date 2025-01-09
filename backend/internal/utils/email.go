@@ -61,7 +61,20 @@ func SendVerificationCode(email, code, firstName string) error {
 	m.SetHeader("From", from)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "Email Verification Code to "+firstName)
-	m.SetBody("text/plain", "Your verification code is: "+code)
+	m.SetBody("text/html", fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<title>Email Verification</title>
+		</head>
+		<body>
+			<h2>Hello %s,</h2>
+			<p>Your verification code is:</p>
+			<h1>%s</h1>
+			<p>Please use this code to verify your email address.</p>
+		</body>
+		</html>
+	`, firstName, code))
 
 	d := gomail.NewDialer(smtpHost, smtpPort, smtpUser, smtpPass)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
@@ -91,7 +104,20 @@ func SendPasswordResetEmail(email, token string) error {
 	m.SetHeader("From", from)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "Password Reset")
-	m.SetBody("text/plain",fmt.Sprintf("Click the link to reset your password: http://localhost:3000/password-reset?token=%s", token))
+	m.SetBody("text/html", fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<title>Password Reset</title>
+		</head>
+		<body>
+			<h2>Click the button below to reset your password:</h2>
+			<p>
+				<a href="http://localhost:3000/password-reset?token=%s" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; background-color: #007bff; text-decoration: none; border-radius: 5px;">Reset Password</a>
+			</p>
+		</body>
+		</html>
+	`, token))
 
 	d := gomail.NewDialer(smtpHost, smtpPort, smtpUser, smtpPass)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}

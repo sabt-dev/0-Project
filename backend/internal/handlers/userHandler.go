@@ -95,7 +95,7 @@ func Register(c *gin.Context) {
 	var verCode string = utils.GenerateEmailVerificationCode()
 	var encodedVerCode string = utils.Encode(verCode)
 
-	newUser.VerificationCode = encodedVerCode
+	newUser.VerificationCode = &encodedVerCode
 	if result := tx.Save(newUser); result.Error != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -214,8 +214,8 @@ func Login(c *gin.Context) {
 	}
 
 	// set the token in a cookie
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", tokenString, 60*60*24*30, "/", "", false, true)
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("Authorization", tokenString, 60*60*24*7, "/", "", true, true)
 	c.JSON(200, gin.H{
 		"status":  "success",
 		"message": "Logged in successfully",
@@ -257,7 +257,7 @@ func VerifyUserEmail(c *gin.Context) {
 	}
 
 	var now time.Time = time.Now()
-	updatedUser.VerificationCode = ""
+	updatedUser.VerificationCode = nil
 	updatedUser.Verified = true
 	updatedUser.VerifiedAt = &now
 	if tx.Save(&updatedUser).Error != nil {
@@ -288,7 +288,7 @@ func VerifyUserEmail(c *gin.Context) {
 // RequestPasswordReset is a handler for POST /request-password-reset
 func RequestPasswordReset(c *gin.Context) {
 	var request struct {
-		Email string `json:"email" binding:"required,email"`
+		Email string `json:"email" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
