@@ -8,21 +8,27 @@ import (
 
 type User struct {
 	ID                   uuid.UUID `gorm:"type:VARCHAR(36);primary_key"`
-	Name                 string    `gorm:"type:varchar(255);not null"`
+	FirstName            string    `gorm:"type:varchar(255);not null"`
+	LastName             string    `gorm:"type:varchar(255);not null"`
+	Username			 string    `gorm:"unique;not null"`
 	Email                string    `gorm:"unique;not null"`
 	VerificationCode     *string
 	Verified             bool 	   `gorm:"not null"`
 	VerifiedAt           *time.Time
 	Password             string    `gorm:"not null" validate:"required,min=8"`
 	Role                 string    `gorm:"not null;type:varchar(255);default:'user'"`
-	PasswordResetToken   *string    `gorm:"type:varchar(255)"`
+	PasswordResetToken   *string   `gorm:"type:varchar(255)"`
 	PasswordResetExpires *time.Time
+	RefreshToken         *string    `gorm:"type:varchar(255)"`
+    RefreshTokenExpiresAt *time.Time
 	CreatedAt            time.Time `gorm:"not null"`
 	UpdatedAt            time.Time `gorm:"not null"`
 }
 
 type SignUpInput struct {
-	Name            string `json:"name" binding:"required"`
+	FirstName       string `json:"fname" binding:"required"`
+	LastName        string `json:"lname" binding:"required"`
+	Username        string `json:"username" binding:"required"`
 	Email           string `json:"email" binding:"required"`
 	Password        string `json:"password" binding:"required,min=8"`
 	PasswordConfirm string `json:"passwordConfirm" binding:"required"`
@@ -35,7 +41,9 @@ type SignInInput struct {
 
 type UserResponse struct {
 	ID        uuid.UUID `json:"id,omitempty"`
-	Name      string    `json:"name,omitempty"`
+	FirstName string    `json:"fname,omitempty"`
+	LastName  string    `json:"lname,omitempty"`
+	Username  string    `json:"username,omitempty"`
 	Email     string    `json:"email,omitempty"`
 	Role      string    `json:"role,omitempty"`
 	CreatedAt time.Time `json:"created_at"`

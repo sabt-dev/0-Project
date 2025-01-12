@@ -1,21 +1,24 @@
 package routes
 
 import (
-	"os"
-
 	"github.com/gin-gonic/gin"
+	"github.com/sabt-dev/0-Project/internal/config"
 	"github.com/sabt-dev/0-Project/internal/handlers"
 	"github.com/sabt-dev/0-Project/internal/middleware"
 )
 
 func Routes(router *gin.Engine) {
-	r := router.Group("/api/" + os.Getenv("API_VERSION"))
+	public := router.Group("/api/" + config.AppConfig.APIv) // Public routes
 
-	r.POST("/auth/register", handlers.Register)
-	r.POST("/auth/login", handlers.Login)
-	r.POST("/auth/request-password-reset", handlers.RequestPasswordReset)
-    r.PUT("/auth/reset-password", handlers.ResetPassword)
-	r.GET("/auth/verify-email", handlers.VerifyUserEmail)
-	r.GET("/users/me", middleware.RequireAuthToken, handlers.GetUser)
-	r.GET("/auth/logout", middleware.RequireAuthToken, handlers.Logout)
+	public.POST("/auth/register", handlers.Register)
+	public.POST("/auth/login", handlers.Login)
+	public.POST("/auth/request-password-reset", handlers.RequestPasswordReset)
+    public.PUT("/auth/reset-password", handlers.ResetPassword)
+	public.GET("/auth/verify-email", handlers.VerifyUserEmail)
+	public.POST("/auth/refresh-token", handlers.RefreshToken)
+
+	protected := router.Group("/api/" + config.AppConfig.APIv) // Protected/Private routes
+
+	protected.GET("/users/me", middleware.RequireAuthToken, handlers.GetUser)
+	protected.GET("/auth/logout", middleware.RequireAuthToken, handlers.Logout)
 }

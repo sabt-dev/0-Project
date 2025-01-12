@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+    APIv       string
     Port       string
     DBHost     string
     DBUser     string
@@ -32,6 +33,7 @@ func LoadConfig() {
     }
 
     AppConfig = Config{
+        APIv:       os.Getenv("API_VERSION"),
         Port:       os.Getenv("PORT"),
         DBHost:     os.Getenv("DB_HOST"),
         DBUser:     os.Getenv("DB_USER"),

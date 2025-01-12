@@ -3,7 +3,9 @@ POST https://localhost:5000/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "name": "sona2",
+  "fname": "sona2",
+  "lname": "hussain",
+  "username": "sona2_hussain",
   "email": "hussain@gmail.com",
   "password": "password1",
   "passwordConfirm": "password1"
@@ -15,7 +17,7 @@ Content-Type: application/json
 
 {
   "email": "hussain@gmail.com",
-  "password": "password2"
+  "password": "password1"
 }
 
 ### POST request to example server
@@ -25,6 +27,8 @@ Content-Type: application/json
 {
   "email": "hussain@gmail.com"
 }
+### POST request to example server
+POST https://localhost:5000/api/v1/auth/refresh-token
 
 ### POST request to example server
 PUT https://localhost:5000/api/v1/auth/reset-password
@@ -42,5 +46,5 @@ GET https://localhost:5000/api/v1/users/me
 GET https://localhost:5000/api/v1/auth/logout
 
 ### GET request to example server
-GET https://localhost:5000/api/v1/auth/verify-email?code=CT1Qvg8406cvfc1XCHow
+GET https://localhost:5000/api/v1/auth/verify-email?code=7j5flwZxz4AVOrDxo0aq
 

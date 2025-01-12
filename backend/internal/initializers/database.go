@@ -20,9 +20,9 @@ func ConnectToDB() {
         log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
         logger.Config{
             SlowThreshold:             time.Second,   // Slow SQL threshold
-            LogLevel:                  logger.Silent, // Log level
+            LogLevel:                  logger.Info, // Log level
             IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
-            Colorful:                  true,         // Disable color
+            Colorful:                  true,          // Disable color
         },
     )
 	dsn := config.AppConfig.DBUser + ":" + config.AppConfig.DBPassword + "@tcp(" + config.AppConfig.DBHost + ":" + config.AppConfig.DBPort + ")/" + config.AppConfig.DBName + "?charset=utf8mb4&parseTime=True&loc=Local"
@@ -30,6 +30,6 @@ func ConnectToDB() {
 		Logger: newLogger,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to database: ", err)
 	}
 }

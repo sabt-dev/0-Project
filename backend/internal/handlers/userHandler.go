@@ -26,10 +26,10 @@ func Register(c *gin.Context) {
 	}
 
 	// check if email and password are provided
-	if body.Email == "" || body.Password == "" || body.Name == "" || body.PasswordConfirm == "" {
+	if body.Email == "" || body.Password == "" || body.FirstName == "" || body.LastName == "" || body.Username == "" || body.PasswordConfirm == "" {
 		c.JSON(400, gin.H{
 			"status": "fail",
-			"error":  "Email and password are required",
+			"error":  "Missing required fields",
 		})
 		return
 	}
@@ -72,7 +72,9 @@ func Register(c *gin.Context) {
 	var now time.Time = time.Now()
 	newUser := models.User{
 		ID:        uuid.New(),
-		Name:      body.Name,
+		FirstName: body.FirstName,
+		LastName:  body.LastName,
+		Username:  body.Username,
 		Email:     strings.ToLower(body.Email),
 		Password:  password,
 		Role:      "user",
@@ -105,13 +107,8 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	var firstName string = newUser.Name
-	if strings.Contains(firstName, " ") {
-		firstName = strings.Split(firstName, " ")[1]
-	}
-
 	// Send Verification Code to User's Email
-	err = utils.SendVerificationCode(newUser.Email, verCode, firstName)
+	err = utils.SendVerificationCode(newUser.Email, verCode, newUser.FirstName)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -203,8 +200,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// generate a token
-	tokenString, err := utils.GenerateToken(&user, c)
+	// Generate a JWT access token
+	accessTokenString, err := utils.GenerateAccessToken(&user, c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "fail",
@@ -213,9 +210,53 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Generate a JWT refresh token
+    refreshTokenString, err := utils.GenerateRefreshToken(&user)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "status": "fail",
+            "error":  "Something went wrong",
+        })
+        return
+    }
+
+	// Start a new transaction
+	tx := initializers.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Something went wrong",
+		})
+		return
+	}
+
+	// Update the user's refresh token
+	var expiresAt time.Time = time.Now().Add(7 * 24 * time.Hour)
+    user.RefreshToken = &refreshTokenString
+	user.RefreshTokenExpiresAt = &expiresAt // Refresh token valid for 7 days
+	if err := tx.Save(&user); err.Error != nil {
+		tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "status": "fail",
+            "error":  "Failed to save refresh token",
+        })
+        return
+    }
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Something went wrong",
+		})
+		return
+	}
+
 	// set the token in a cookie
-	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("Authorization", tokenString, 60*60*24*7, "/", "", true, true)
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Authorization", accessTokenString, 60*60*24, "/", "", false, true)
+	c.SetCookie("RefreshToken", refreshTokenString, 60*60*24*7, "/", "", false, true)
 	c.JSON(200, gin.H{
 		"status":  "success",
 		"message": "Logged in successfully",
@@ -476,7 +517,9 @@ func GetUser(c *gin.Context) {
 	user, _ := c.MustGet("userData").(models.User)
 	userResponse := &models.UserResponse{
 		ID:        user.ID,
-		Name:      user.Name,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Username:  user.Username,
 		Email:     user.Email,
 		Role:      user.Role,
 		CreatedAt: user.CreatedAt,
@@ -487,4 +530,65 @@ func GetUser(c *gin.Context) {
 		"status": "success",
 		"data":   userResponse,
 	})
+}
+
+// RefreshToken is a handler for POST /refresh-token
+func RefreshToken(c *gin.Context) {
+    refreshToken, err := c.Cookie("RefreshToken")
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{
+            "status": "fail",
+            "error":  "Refresh token not provided",
+        })
+        return
+    }
+
+    // Validate the refresh token
+    claims, err := utils.ValidateToken(refreshToken)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{
+            "status": "fail",
+            "error":  "Invalid refresh token",
+        })
+        return
+    }
+
+    // Extract user ID from token claims
+    userID, ok := claims["sub"].(string)
+    if !ok {
+        c.JSON(http.StatusUnauthorized, gin.H{
+            "status": "fail",
+            "error":  "Invalid refresh token",
+        })
+        return
+    }
+
+    var user models.User
+    result := initializers.DB.Where("id = ? AND refresh_token = ?", userID, refreshToken).First(&user)
+    if result.Error != nil || user.RefreshTokenExpiresAt.Before(time.Now()) {
+        c.JSON(http.StatusUnauthorized, gin.H{
+            "status": "fail",
+            "error":  "Invalid or expired refresh token",
+        })
+        return
+    }
+
+    // Generate a new access token
+	accessToken, err := utils.GenerateAccessToken(&user, c)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "status": "fail",
+            "error":  "Something went wrong",
+        })
+        return
+    }
+
+    // Set the new access token in a cookie
+    c.SetSameSite(http.SameSiteLaxMode)
+    c.SetCookie("Authorization", accessToken, 60*60*24, "/", "", false, true)
+
+    c.JSON(http.StatusOK, gin.H{
+        "status":  "success",
+        "message": "Access token refreshed successfully",
+    })
 }
