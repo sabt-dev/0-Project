@@ -13,8 +13,11 @@ import (
 func GenerateAccessToken(user *models.User, c *gin.Context) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.ID,
-		"adr": c.ClientIP(),
+		"role": user.Role,
+		"username": user.Username,
+		"ip": c.ClientIP(),
 		"exp": time.Now().Add(15 * time.Minute).Unix(), // Access token valid for 15 minutes
+		"iat": time.Now().Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(config.AppConfig.JWTSecret))
@@ -25,10 +28,12 @@ func GenerateAccessToken(user *models.User, c *gin.Context) (string, error) {
 }
 
 // GenerateRefreshToken generates a JWT refresh token for the user
-func GenerateRefreshToken(user *models.User) (string, error) {
+func GenerateRefreshToken(user *models.User, c *gin.Context) (string, error) {
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
         "sub": user.ID,
+		"ip": c.ClientIP(),
         "exp": time.Now().Add(7 * 24 * time.Hour).Unix(), // Refresh token valid for 7 days
+		"iat": time.Now().Unix(),
     })
 
     tokenString, err := token.SignedString([]byte(config.AppConfig.JWTSecret))

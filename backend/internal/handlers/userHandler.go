@@ -211,7 +211,7 @@ func Login(c *gin.Context) {
 	}
 
 	// Generate a JWT refresh token
-    refreshTokenString, err := utils.GenerateRefreshToken(&user)
+    refreshTokenString, err := utils.GenerateRefreshToken(&user, c)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{
             "status": "fail",
@@ -508,8 +508,56 @@ func ResetPassword(c *gin.Context) {
 
 // Logout is a handler for GET /logout
 func Logout(c *gin.Context) {
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", "", -1, "/", "", false, true)
+	user, exists := c.Get("userData")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{
+            "status": "fail",
+            "error":  "User not authenticated",
+        })
+        return
+    }
+
+    // Invalidate the refresh token
+    var userData models.User = user.(models.User)
+    userData.RefreshToken = nil
+    userData.RefreshTokenExpiresAt = nil
+
+    tx := initializers.DB.Begin()
+    if tx.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "status": "fail",
+            "error":  "Something went wrong",
+        })
+        return
+    }
+
+    if err := tx.Save(&userData).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "status": "fail",
+            "error":  "Something went wrong",
+        })
+        return
+    }
+
+    if err := tx.Commit().Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "status": "fail",
+            "error":  "Something went wrong",
+        })
+        return
+    }
+
+    // Clear the cookies
+    c.SetSameSite(http.SameSiteLaxMode)
+    c.SetCookie("Authorization", "", -1, "/", "", false, true)
+    c.SetCookie("RefreshToken", "", -1, "/", "", false, true)
+
+    c.JSON(http.StatusOK, gin.H{
+        "status":  "success",
+        "message": "Logged out successfully",
+    })
 }
 
 // GetUser is a handler for GET /user
@@ -552,6 +600,15 @@ func RefreshToken(c *gin.Context) {
         })
         return
     }
+
+	// check if the user has the same IP-address
+	if claims["ip"] != c.ClientIP() {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "fail",
+			"error":  "Invalid refresh token",
+		})
+		return
+	}
 
     // Extract user ID from token claims
     userID, ok := claims["sub"].(string)

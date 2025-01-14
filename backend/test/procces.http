@@ -17,7 +17,7 @@ Content-Type: application/json
 
 {
   "email": "hussain@gmail.com",
-  "password": "password1"
+  "password": "password2"
 }
 
 ### POST request to example server
@@ -35,7 +35,7 @@ PUT https://localhost:5000/api/v1/auth/reset-password
 Content-Type: application/json
 
 {
-  "token": "ZDA0NTBkOTktMWU1NC00YmZlLWI1MDUtNGY4ZGVkYWE3NzI0",
+  "token": "MTJiMjhkZTgtMmY1ZS00YmI3LWFkZmYtMzE4NjUxN2IwMGFi",
   "newPassword": "password2"
 }
 
@@ -46,5 +46,5 @@ GET https://localhost:5000/api/v1/users/me
 GET https://localhost:5000/api/v1/auth/logout
 
 ### GET request to example server
-GET https://localhost:5000/api/v1/auth/verify-email?code=7j5flwZxz4AVOrDxo0aq
+GET https://localhost:5000/api/v1/auth/verify-email?code=VnDc18bgKIM4sKBFBFvc
 

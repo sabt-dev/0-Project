@@ -38,7 +38,7 @@ func RequireAuthToken(c *gin.Context) {
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"status": "fail",
-				"error": "Token is expired",
+				"error": "Token has expired",
 			})
 		}
 
@@ -57,7 +57,7 @@ func RequireAuthToken(c *gin.Context) {
         }
 
 		// check if the user has the same IP-address
-		if claims["adr"] != c.ClientIP() {
+		if claims["ip"] != c.ClientIP() {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
