@@ -15,7 +15,7 @@ export default function Home() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('https://localhost:5000/api/v1/auth/login', {
+            const response = await fetch('http://localhost:5000/api/v1/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -23,16 +23,22 @@ export default function Home() {
                 credentials: 'include',
                 body: JSON.stringify({
                     "email": email,
-                    "pwd": password
+                    "password": password
                 }),
             });
 
+            if (!response.ok) {
+                setLoading(false);
+                console.warn('Failed to login');
+                return;
+            }
+
             const text = await response.text();
-            const data = text ? JSON.parse(text) : {};
+            const res = text ? JSON.parse(text) : {};
             //console.log(data);
             setLoading(false);
-            if (data.status === "success") {
-                router.push(`/profile/${data.uid}`);
+            if (res.status === "success") {
+                router.push(`/profile/${res.data.uid}`);
             }
         } catch (error) {
             console.warn('An unexpected error happened:', error);

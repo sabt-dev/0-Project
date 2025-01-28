@@ -1,5 +1,5 @@
 ### POST request to example server
-POST https://localhost:5000/api/v1/auth/register
+POST http://localhost:5000/api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -17,7 +17,7 @@ Content-Type: application/json
 
 {
   "email": "hussain@gmail.com",
-  "password": "password2"
+  "password": "password1"
 }
 
 ### POST request to example server
@@ -27,10 +27,17 @@ Content-Type: application/json
 {
   "email": "hussain@gmail.com"
 }
-### POST request to example server
-POST https://localhost:5000/api/v1/auth/refresh-token
+### GET request to example server
+POST http://localhost:5000/api/v1/auth/verify-email
+Content-Type: application/json
 
-### POST request to example server
+{
+  "code": "CK96xWoaqnfhjTcsyaom"
+}
+### POST request to tefresh token
+POST http://localhost:5000/api/v1/auth/refresh-token
+
+### POST request to reset password
 PUT https://localhost:5000/api/v1/auth/reset-password
 Content-Type: application/json
 
@@ -39,12 +46,8 @@ Content-Type: application/json
   "newPassword": "password2"
 }
 
-### get request to example server
+### GET request to example server
 GET https://localhost:5000/api/v1/users/me
 
 ### GET request to example server
 GET https://localhost:5000/api/v1/auth/logout
-
-### GET request to example server
-GET https://localhost:5000/api/v1/auth/verify-email?code=VnDc18bgKIM4sKBFBFvc
-

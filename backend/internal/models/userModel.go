@@ -7,22 +7,22 @@ import (
 )
 
 type User struct {
-	ID                   uuid.UUID `gorm:"type:VARCHAR(36);primary_key"`
-	FirstName            string    `gorm:"type:varchar(255);not null"`
-	LastName             string    `gorm:"type:varchar(255);not null"`
-	Username			 string    `gorm:"unique;not null"`
-	Email                string    `gorm:"unique;not null"`
-	VerificationCode     *string
-	Verified             bool 	   `gorm:"not null"`
-	VerifiedAt           *time.Time
-	Password             string    `gorm:"not null" validate:"required,min=8"`
-	Role                 string    `gorm:"not null;type:varchar(255);default:'user'"`
-	PasswordResetToken   *string   `gorm:"type:varchar(255)"`
-	PasswordResetExpires *time.Time
-	RefreshToken         *string    `gorm:"type:varchar(255)"`
-    RefreshTokenExpiresAt *time.Time
-	CreatedAt            time.Time `gorm:"not null"`
-	UpdatedAt            time.Time `gorm:"not null"`
+	ID                    uuid.UUID 	`gorm:"type:VARCHAR(36);primary_key"`
+	FirstName             string    	`gorm:"type:varchar(255);not null"`
+	LastName              string    	`gorm:"type:varchar(255);not null"`
+	Username              string    	`gorm:"unique;not null"`
+	Email                 string    	`gorm:"unique;not null"`
+	VerificationCode      *string
+	Verified              bool 			`gorm:"not null"`
+	VerifiedAt            *time.Time
+	Password              string  		`gorm:"not null" validate:"required,min=8"`
+	Role                  string  		`gorm:"not null;type:varchar(255);default:'user'"`
+	PasswordResetToken    *string 		`gorm:"unique;type:varchar(255)"`
+	PasswordResetExpires  *time.Time
+	RefreshToken          *string 		`gorm:"type:varchar(255)"`
+	RefreshTokenExpiresAt *time.Time
+	CreatedAt             time.Time 	`gorm:"not null"`
+	UpdatedAt             time.Time 	`gorm:"not null"`
 }
 
 type SignUpInput struct {

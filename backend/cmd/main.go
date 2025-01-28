@@ -15,7 +15,7 @@ func init() {
 	config.LoadConfig()
 	initializers.ConnectToDB()
 	initializers.SyncDatabase()
-	initializers.CheckTLSFilesExistence()
+	//initializers.CheckTLSFilesExistence()
 }
 
 func main() {
@@ -28,14 +28,15 @@ func main() {
 	router.Use(middleware.RateLimiter())
 
 	// Start the cleanup job
-    // go services.CleanupUnverifiedUsers()
+    //go services.CleanupUnverifiedUsers()
 	
 	// Apply the routes to the router
 	routes.Routes(router)
 	
 	// Run the server with TLS
 	addr := ":" + config.AppConfig.Port
-	err := router.RunTLS(addr, "../tls/cert.pem", "../tls/key.pem")
+	//err := router.RunTLS(addr, "../tls/cert.pem", "../tls/key.pem")
+	err := router.Run(addr)
 	if err != nil {
 		log.Fatal(err)
 	}

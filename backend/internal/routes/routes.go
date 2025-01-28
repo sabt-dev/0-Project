@@ -14,7 +14,7 @@ func Routes(router *gin.Engine) {
 	public.POST("/auth/login", handlers.Login)
 	public.POST("/auth/request-password-reset", handlers.RequestPasswordReset)
     public.PUT("/auth/reset-password", handlers.ResetPassword)
-	public.GET("/auth/verify-email", handlers.VerifyUserEmail)
+	public.POST("/auth/verify-email", handlers.VerifyUserEmail)
 	public.POST("/auth/refresh-token", handlers.RefreshToken)
 
 	protected := router.Group("/api/" + config.AppConfig.APIv) // Protected/Private routes

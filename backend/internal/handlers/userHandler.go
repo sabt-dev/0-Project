@@ -183,7 +183,7 @@ func Login(c *gin.Context) {
 
 	// check if the user is verified
 	if !user.Verified {
-		c.JSON(http.StatusConflict, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "fail",
 			"error":  "Invalid email or password",
 		})
@@ -260,13 +260,27 @@ func Login(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"status":  "success",
 		"message": "Logged in successfully",
+		"data":    gin.H{
+			"uid": user.ID,
+		},
 	})
 }
 
-// VerifyEmail is a handler for GET /verifyemail?code=[verification_code]
+// VerifyEmail is a handler for POST /verifyemail
 func VerifyUserEmail(c *gin.Context) {
-	var code string = c.Query("code")
-	var verification_code string = utils.Encode(code)
+	var body struct {
+		Code string `json:"code" binding:"required"`
+	}
+	
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "fail",
+			"error":  "Invalid json request format",
+		})
+		return
+	}
+	
+	var verification_code string = utils.Encode(body.Code)
 
 	// Start a new transaction
     tx := initializers.DB.Begin()
