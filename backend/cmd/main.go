@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sabt-dev/0-Project/internal/config"
 	"github.com/sabt-dev/0-Project/internal/initializers"
-	// "github.com/sabt-dev/0-Project/internal/services"
+    "github.com/sabt-dev/0-Project/internal/services"
 	"github.com/sabt-dev/0-Project/internal/middleware"
 	"github.com/sabt-dev/0-Project/internal/routes"
 )
@@ -28,7 +28,7 @@ func main() {
 	router.Use(middleware.RateLimiter())
 
 	// Start the cleanup job
-    //go services.CleanupUnverifiedUsers()
+    go services.CleanupUnverifiedUsers()
 	
 	// Apply the routes to the router
 	routes.Routes(router)
