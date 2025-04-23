@@ -57,10 +57,10 @@ func RequireAuthToken(c *gin.Context) {
         }
 
 		// check if the user has the same IP-address
-		if claims["ip"] != c.ClientIP() {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
+		//if claims["ip"] != c.ClientIP() {
+		//	c.AbortWithStatus(http.StatusUnauthorized)
+		//	return
+		//}
 
 		// attach the user to the context
 		c.Set("userData", user)

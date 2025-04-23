@@ -616,13 +616,13 @@ func RefreshToken(c *gin.Context) {
     }
 
 	// check if the user has the same IP-address
-	if claims["ip"] != c.ClientIP() {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"status": "fail",
-			"error":  "Invalid refresh token",
-		})
-		return
-	}
+	//if claims["ip"] != c.ClientIP() {
+	//	c.JSON(http.StatusUnauthorized, gin.H{
+	//		"status": "fail",
+	//		"error":  "Invalid refresh token",
+	//	})
+	//	return
+	//}
 
     // Extract user ID from token claims
     userID, ok := claims["sub"].(string)
