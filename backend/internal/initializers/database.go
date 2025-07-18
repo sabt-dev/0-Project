@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/sabt-dev/0-Project/internal/config"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	_ "modernc.org/sqlite"
 )
 
 var DB *gorm.DB
@@ -25,8 +26,11 @@ func ConnectToDB() {
             Colorful:                  true,          // Enable color
         },
     )
-	dsn := config.AppConfig.DBUser + ":" + config.AppConfig.DBPassword + "@tcp(" + config.AppConfig.DBHost + ":" + config.AppConfig.DBPort + ")/" + config.AppConfig.DBName + "?charset=utf8mb4&parseTime=True&loc=Local"
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	// Open a connection to the SQLite database using modernc.org/sqlite
+	DB, err = gorm.Open(sqlite.Dialector{
+		DriverName: "sqlite",
+		DSN:        config.AppConfig.DBHost,
+	}, &gorm.Config{
 		Logger: newLogger,
 	})
 	if err != nil {
