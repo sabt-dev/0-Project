@@ -1,0 +1,35 @@
+# Environment files
+.env*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Database directory (if storing local database files)
+database/
