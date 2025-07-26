@@ -22,9 +22,19 @@ type Config struct {
 var AppConfig Config
 
 func LoadConfig() {
-	err := godotenv.Load(".env")
+	// Try different possible paths for .env file
+	envPaths := []string{".env", "../.env", "./.env"}
+	var err error
+
+	for _, path := range envPaths {
+		err = godotenv.Load(path)
+		if err == nil {
+			break // Successfully loaded
+		}
+	}
+
 	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err.Error())
+		log.Fatalf("Error loading .env file from any location: %s", err.Error())
 	}
 
 	AppConfig = Config{

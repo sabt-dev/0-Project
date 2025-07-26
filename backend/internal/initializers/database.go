@@ -16,16 +16,25 @@ var DB *gorm.DB
 
 func ConnectToDB() {
 	var err error
-    // Configure the logger to be silent
-    newLogger := logger.New(
-        log.New(os.Stdout, "\r\n", log.LstdFlags),    // io writer
-        logger.Config{
-            SlowThreshold:             time.Second,   // Slow SQL threshold
-            LogLevel:                  logger.Warn,	  // Log level
-            IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
-            Colorful:                  true,          // Enable color
-        },
-    )
+	// Configure the logger to be silent
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second, // Slow SQL threshold
+			LogLevel:                  logger.Warn, // Log level
+			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+			Colorful:                  true,        // Enable color
+		},
+	)
+
+	//check if the directory database does not exist
+	if _, err := os.Stat("./database"); os.IsNotExist(err) || err != nil {
+		err = os.MkdirAll("./database", os.ModePerm)
+		if err != nil {
+			log.Fatal("Failed to create database directory: ", err)
+		}
+	}
+
 	// Open a connection to the SQLite database using modernc.org/sqlite
 	DB, err = gorm.Open(sqlite.Dialector{
 		DriverName: "sqlite",
@@ -34,6 +43,6 @@ func ConnectToDB() {
 		Logger: newLogger,
 	})
 	if err != nil {
-		log.Fatal("Failed to connect to database: ", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 }
