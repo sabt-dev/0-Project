@@ -8,7 +8,6 @@ Content-Type: application/json
   "username": "sona2_hussan",
   "email": "huss@gmail.com",
   "password": "password1",
-  "passwordConfirm": "password1"
 }
 
 ### post request to example server

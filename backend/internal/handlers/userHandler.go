@@ -26,18 +26,10 @@ func Register(c *gin.Context) {
 	}
 
 	// check if email and password are provided
-	if body.Email == "" || body.Password == "" || body.FirstName == "" || body.LastName == "" || body.Username == "" || body.PasswordConfirm == "" {
+	if body.Email == "" || body.Password == "" || body.FirstName == "" || body.LastName == "" || body.Username == "" {
 		c.JSON(400, gin.H{
 			"status": "fail",
 			"error":  "Missing required fields",
-		})
-		return
-	}
-
-	if body.Password != body.PasswordConfirm {
-		c.JSON(400, gin.H{
-			"status": "fail",
-			"error":  "password do not match",
 		})
 		return
 	}
@@ -576,7 +568,22 @@ func Logout(c *gin.Context) {
 
 // GetUser is a handler for GET /user
 func GetUser(c *gin.Context) {
-	user, _ := c.MustGet("userData").(models.User)
+	userData, exists := c.Get("userData")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status": "fail",
+			"error":  "User not authenticated",
+		})
+		return
+	}
+	user, ok := userData.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": "fail",
+			"error":  "Failed to parse user data",
+		})
+		return
+	}
 	userResponse := &models.UserResponse{
 		ID:        user.ID,
 		FirstName: user.FirstName,
@@ -584,8 +591,6 @@ func GetUser(c *gin.Context) {
 		Username:  user.Username,
 		Email:     user.Email,
 		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
 	}
 	//TODO: complete the implementation with user model
 	c.JSON(200, gin.H{
