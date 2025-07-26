@@ -32,7 +32,5 @@ go.work
 *.log
 
 # Database directory (if storing local database files)
-database/
+database/database.db
 
-# Test files
-test/
