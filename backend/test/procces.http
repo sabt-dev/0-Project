@@ -25,14 +25,14 @@ POST http://localhost:5000/api/v1/auth/request-password-reset
 Content-Type: application/json
 
 {
-  "email": "hussain@gmail.com"
+  "email": "huss@gmail.com"
 }
 ### GET request to example server
 POST http://localhost:5000/api/v1/auth/verify-email
 Content-Type: application/json
 
 {
-  "code": "CK96xWoaqnfhjTcsyaom"
+  "code": "bYI153MRq5XGw6GhCdFy"
 }
 ### POST request to tefresh token
 POST http://localhost:5000/api/v1/auth/refresh-token
@@ -42,7 +42,7 @@ PUT http://localhost:5000/api/v1/auth/reset-password
 Content-Type: application/json
 
 {
-  "token": "MTJiMjhkZTgtMmY1ZS00YmI3LWFkZmYtMzE4NjUxN2IwMGFi",
+  "token": "bYI153MRq5XGw6GhCdFy",
   "newPassword": "password2"
 }
 

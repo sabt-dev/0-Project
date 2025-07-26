@@ -33,3 +33,6 @@ go.work
 
 # Database directory (if storing local database files)
 database/
+
+# Test files
+test/

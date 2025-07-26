@@ -25,12 +25,26 @@ const UserProfileID = ({ params }: { params: any }) => {
                     credentials: 'include',
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const text = await response.text();
                 const resp = text ? JSON.parse(text) : {};
                 setRes(resp);
-                console.log(res);
+                console.log('API Response:', resp);
                 
-                if (resp.data.id !== id) {
+                // Check if response has the expected structure
+                if (!resp.data || !resp.data.id) {
+                    setAuthorized(false);
+                    setError('Invalid response from server');
+                    return;
+                }
+                
+                // Convert UUID to string for comparison
+                const userIdFromResponse = resp.data.id.toString ? resp.data.id.toString() : resp.data.id;
+                
+                if (userIdFromResponse !== id) {
                     setAuthorized(false);
                     setError('Unauthorized');
                 } else {
@@ -38,7 +52,12 @@ const UserProfileID = ({ params }: { params: any }) => {
                     setError(null);
                 }
             } catch (error) {
-                setError('An unexpected error happened: ' + error);
+                console.error('Fetch error:', error);
+                if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                    setError('Cannot connect to server. Please make sure the backend is running on http://localhost:5000');
+                } else {
+                    setError('An unexpected error happened: ' + error);
+                }
             } finally {
                 setLoading(false);
             }
